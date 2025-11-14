@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./groupement.db:/app/groupement.db  # Persist the SQLite database
+      - ./debug.log:/app/debug.log  # Persist logs
+    environment:
+      - DATABASE_URL=sqlite:///./groupement.db
+  # Bind to 0.0.0.0 so the service is reachable from other containers on the Docker network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    healthcheck:
+      # Use Python for the healthcheck because the image may not have curl installed.
+      # This tries to fetch the root endpoint and exits non-zero on failure.
+      # Use the lightweight /health endpoint for healthchecks
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\", timeout=5)' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://app:8000
+    volumes:
+      - ./:/app
+    depends_on:
+      - app
