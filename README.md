@@ -8,7 +8,7 @@ et calculer des points de ramassage.
 
 ---
 
-## Exécution locale (sans Docker)
+## Exécution locale (sans Docker).
 1. Créez et activez un environnement virtuel (PowerShell) :
 
 ```powershell
